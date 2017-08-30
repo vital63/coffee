@@ -1,24 +1,19 @@
 package ru.javabegin.training.coffee;
 
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 
 //TODO: internationalization
 //TODO: validation
-//TODO: ErrorPage on exception
 public class CoffeeController extends HttpServlet {
 
     /**
@@ -48,10 +43,14 @@ public class CoffeeController extends HttpServlet {
     }
     
     private void listCoffee(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        RequestDispatcher rd = request.getRequestDispatcher("/CoffeeList.jsp");
-        List<CoffeeType> coffeeList = coffeeDAO.listCoffeeType(false);
-        request.setAttribute("coffeeList", coffeeList);
-        rd.forward(request, response);
+        try {
+            RequestDispatcher rd = request.getRequestDispatcher("/CoffeeList.jsp");
+            List<CoffeeType> coffeeList = coffeeDAO.listCoffeeType(false);
+            request.setAttribute("coffeeList", coffeeList);
+            rd.forward(request, response);
+        } catch (SQLException ex) {
+            throw new ServletException(ex);
+        }
     }
     
     private void delivery(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -60,26 +59,30 @@ public class CoffeeController extends HttpServlet {
         rd.forward(request, response);
     }    
     
-    private void prepareOrder(HttpServletRequest request){
-        CoffeeOrder order = new CoffeeOrder();
-        order.setOrderDate(new Date());
-        List<CoffeeOrderItem> orderItems = new ArrayList<>();
-        Map<String, String[]> parameters = request.getParameterMap();
-        for (String key : parameters.keySet()) {
-            String value = parameters.get(key)[0];
-            if (!value.isEmpty()) {
-                CoffeeOrderItem orderItem = new CoffeeOrderItem();
-                CoffeeType coffeeType = coffeeDAO.getCoffeeTypeById(Long.parseLong(key));
-                orderItem.setCoffeeType(coffeeType);
-                orderItem.setQuantity(Integer.parseInt(value));
-                orderItem.setCoffeeOrder(order);
-                orderItems.add(orderItem);
+    private void prepareOrder(HttpServletRequest request) throws ServletException{
+        try {
+            CoffeeOrder order = new CoffeeOrder();
+            order.setOrderDate(new Date());
+            List<CoffeeOrderItem> orderItems = new ArrayList<>();
+            Map<String, String[]> parameters = request.getParameterMap();
+            for (String key : parameters.keySet()) {
+                String value = parameters.get(key)[0];
+                if (!value.isEmpty()) {
+                    CoffeeOrderItem orderItem = new CoffeeOrderItem();
+                    CoffeeType coffeeType = coffeeDAO.getCoffeeTypeById(Long.parseLong(key));
+                    orderItem.setCoffeeType(coffeeType);
+                    orderItem.setQuantity(Integer.parseInt(value));
+                    orderItem.setCoffeeOrder(order);
+                    orderItems.add(orderItem);
+                }
             }
+            coffeeDAO.calculateCost(order, orderItems);
+            System.out.println("orderItems.size: " + orderItems.size());
+            request.getSession().setAttribute("orderItems", orderItems);
+            request.getSession().setAttribute("order", order);
+        } catch (SQLException ex) {
+            throw new ServletException(ex);
         }
-        coffeeDAO.calculateCost(order, orderItems);
-        System.out.println("orderItems.size: " + orderItems.size());
-        request.getSession().setAttribute("orderItems", orderItems);
-        request.getSession().setAttribute("order", order);
     }
 
     private void createOrder(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -89,7 +92,11 @@ public class CoffeeController extends HttpServlet {
         order.setName(request.getParameter("name"));
         order.setDeliveryAddress(request.getParameter("address"));
         
-        coffeeDAO.createOrder(order, orderItems);
+        try {
+            coffeeDAO.createOrder(order, orderItems);
+        } catch (SQLException ex) {
+            throw new ServletException(ex);
+        }
         RequestDispatcher rd = request.getRequestDispatcher("/Confirmation.jsp");
         rd.forward(request, response);    
     }

@@ -5,7 +5,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.SimpleDateFormat;
-import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -15,11 +14,10 @@ import java.util.logging.Logger;
 
 public class CoffeeDAO {
     
-    public List<CoffeeType> listCoffeeType(boolean withDisabled) {
+    public List<CoffeeType> listCoffeeType(boolean withDisabled) throws SQLException{
         List<CoffeeType> result = new ArrayList<>();
         String sql = "SELECT * FROM coffeetype";
-        try(
-            Connection connection = DBConnectionManager.getInstance().getConnection();
+        try(Connection connection = DBConnectionManager.getInstance().getConnection();
             Statement statement = connection.createStatement();
             ResultSet resultSet = statement.executeQuery(sql);)
         {
@@ -36,21 +34,16 @@ public class CoffeeDAO {
                 result.add(coffee);
             }
         }
-        catch(SQLException e)
-        {
-            Logger.getLogger(CoffeeDAO.class.getName()).log(Level.SEVERE, null, e);
-        }
 
         return result;
     }
     
-    public CoffeeType getCoffeeTypeById(long id) {
+    public CoffeeType getCoffeeTypeById(long id) throws SQLException {
         CoffeeType result = null;
         String sql = String.format("SELECT * FROM coffeetype WHERE id='%s'", id);
-        try (
-                Connection connection = DBConnectionManager.getInstance().getConnection();
-                Statement statement = connection.createStatement();
-                ResultSet resultSet = statement.executeQuery(sql);) 
+        try(Connection connection = DBConnectionManager.getInstance().getConnection();
+            Statement statement = connection.createStatement();
+            ResultSet resultSet = statement.executeQuery(sql);) 
         {
             if (resultSet.next()) {
                 String type = resultSet.getString("type_name");
@@ -60,10 +53,6 @@ public class CoffeeDAO {
                 result = new CoffeeType(id, type, price, disabled);
             }
         }
-        catch (SQLException e) {
-            Logger.getLogger(CoffeeDAO.class.getName()).log(Level.SEVERE, null, e);
-        }
-
         return result;
     }
     
@@ -73,7 +62,7 @@ public class CoffeeDAO {
 //        System.out.println(coffeeDAO.getCoffeeTypeById(2));
 //    }
 
-    private String getConfigValue(String parameter){
+    private String getConfigValue(String parameter) throws SQLException {
         String result = null;
         String sql = String.format("SELECT value FROM configuration WHERE id='%s'", parameter);
         try (
@@ -83,9 +72,7 @@ public class CoffeeDAO {
             if (resultSet.next()) {
                 result = resultSet.getString("value");
             }
-        } catch (SQLException e){
-            Logger.getLogger(CoffeeDAO.class.getName()).log(Level.SEVERE, null, e);
-        }    
+        }   
         return result;
     }
     
@@ -96,7 +83,7 @@ public class CoffeeDAO {
 //        System.out.println("x: " + coffeeDAO.getConfigValue("x"));
 //    }
     //TODO: Move in db
-    public void calculateCost(CoffeeOrder order, List<CoffeeOrderItem> orderItems){
+    public void calculateCost(CoffeeOrder order, List<CoffeeOrderItem> orderItems) throws SQLException {
         int n = Integer.parseInt(getConfigValue("n"));
         float m = Float.parseFloat(getConfigValue("m"));
         float x = Float.parseFloat(getConfigValue("x"));
@@ -124,17 +111,15 @@ public class CoffeeDAO {
 //        }
 //    }
     
-    private long getNextID(String tableName){
+    private long getNextID(String tableName) throws SQLException {
         final String sql = String.format("SELECT MAX(id) FROM %s", tableName);
-        try (   Connection connection = DBConnectionManager.getInstance().getConnection();
-                Statement statement = connection.createStatement();
-                ResultSet resultSet = statement.executeQuery(sql);) 
+        try(Connection connection = DBConnectionManager.getInstance().getConnection();
+            Statement statement = connection.createStatement();
+            ResultSet resultSet = statement.executeQuery(sql);) 
         {
             if(resultSet.next())
                 return resultSet.getInt(1) + 1;
-        } catch (SQLException e) {
-            Logger.getLogger(CoffeeDAO.class.getName()).log(Level.SEVERE, null, e);
-        }
+        } 
         return -1;
     }
     
@@ -144,7 +129,7 @@ public class CoffeeDAO {
 //        System.out.println(coffeeDAO.getNextID("coffeetype"));
 //    }
     
-    public void createOrder(CoffeeOrder order, List<CoffeeOrderItem> orderItems){
+    public void createOrder(CoffeeOrder order, List<CoffeeOrderItem> orderItems) throws SQLException {
         long orderID = getNextID("coffeeorder");
         order.setId(orderID);
         String formattedDate = (new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")).format(order.getOrderDate());
@@ -152,29 +137,25 @@ public class CoffeeDAO {
             "INSERT INTO coffeeorder (id, order_date, name, delivery_address, cost)\n"
             + "VALUES (%d, '%s', '%s', '%s', %f)",
             orderID, formattedDate, order.getName(), order.getDeliveryAddress(), order.getTotalCost());
-        Connection connection = DBConnectionManager.getInstance().getConnection();
         
-        try{
-            try (Statement statement = connection.createStatement();) 
+        Connection connection = DBConnectionManager.getInstance().getConnection();
+        try (Statement statement = connection.createStatement();) 
+        {
+            connection.setAutoCommit(false);
+            if (statement.executeUpdate(sql) > 0);
             {
-                connection.setAutoCommit(false);
-                if (statement.executeUpdate(sql) > 0);
-                {
-                    long orderItemID = getNextID("coffeeorderitem");
-                    for(CoffeeOrderItem orderItem: orderItems){
-                        createOrderItem(orderItem, statement, orderItemID++);
-                    }
-                    connection.commit();
+                long orderItemID = getNextID("coffeeorderitem");
+                for(CoffeeOrderItem orderItem: orderItems){
+                    createOrderItem(orderItem, statement, orderItemID++);
                 }
-            } catch (SQLException e) {
-                Logger.getLogger(CoffeeDAO.class.getName()).log(Level.SEVERE, null, e);
-                connection.rollback();
+                connection.commit();
             }
-            finally{
-                connection.close();
-            }
-        }catch(SQLException e){
-            Logger.getLogger(CoffeeDAO.class.getName()).log(Level.SEVERE, null, e);
+        } catch (SQLException e) {
+            connection.rollback();
+            throw e;
+        }
+        finally{
+            connection.close();
         }
     }
     
