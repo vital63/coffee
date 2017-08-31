@@ -1,6 +1,8 @@
 package ru.javabegin.training.coffee;
 
+import java.sql.CallableStatement;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -82,23 +84,55 @@ public class CoffeeDAO {
 //        System.out.println("n: " + coffeeDAO.getConfigValue("n"));
 //        System.out.println("x: " + coffeeDAO.getConfigValue("x"));
 //    }
-    //TODO: Move in db
+
     public void calculateCost(CoffeeOrder order, List<CoffeeOrderItem> orderItems) throws SQLException {
-        int n = Integer.parseInt(getConfigValue("n"));
-        float m = Float.parseFloat(getConfigValue("m"));
-        float x = Float.parseFloat(getConfigValue("x"));
+        final String sqlCreateTable = "CREATE TEMPORARY TABLE IF NOT EXISTS coffee_count "
+                + "(type_id INTEGER not NULL, count INTEGER, cost FLOAT, PRIMARY KEY ( type_id ));";
+        final String sqlClearTable = "TRUNCATE TABLE coffee_count;";
+        final String sqlInsertCount = "INSERT INTO coffee_count (type_id, count) VALUES (?, ?)";
+        final String sqlGetCostForType = "SELECT type_id, cost FROM coffee_count";
         
-        float coffeeCost = 0;
-        for(CoffeeOrderItem item: orderItems){
-            int discountN = (int)(item.getQuantity() / n);
-            item.setCost((item.getQuantity() - discountN) * item.getCoffeeType().getPrice());
-            coffeeCost += item.getCost();
-        }
-        float deliveryCost = coffeeCost > x ? 0 : m;
+        try (Connection connection = DBConnectionManager.getInstance().getConnection();
+            Statement statement = connection.createStatement();
+            PreparedStatement insertCountStatement = connection.prepareStatement(sqlInsertCount);
+            CallableStatement calculateCostStatement = connection.prepareCall("{call calculate_cost_order(?, ?)}")) 
+        {
+            statement.executeUpdate(sqlCreateTable);
+            statement.executeUpdate(sqlClearTable);
+            
+            for (CoffeeOrderItem item : orderItems) { //fill temporary table
+                insertCountStatement.setLong(1, item.getCoffeeType().getId());
+                insertCountStatement.setInt(2, item.getQuantity());
+                insertCountStatement.executeUpdate();
+            }
+            
+            calculateCostStatement.registerOutParameter("coffee", java.sql.Types.FLOAT);
+            calculateCostStatement.registerOutParameter("delivery", java.sql.Types.FLOAT);
+            calculateCostStatement.executeQuery();
+            
+            //retriew cost for each type from temporary table
+            ResultSet resultSet = statement.executeQuery(sqlGetCostForType);
+            while (resultSet.next()) {
+                int typeId = resultSet.getInt("type_id");
+                float cost = resultSet.getFloat("cost");
                 
-        order.setDeliveryCost(deliveryCost);
-        order.setCoffeeCost(coffeeCost);
-        order.setTotalCost(coffeeCost + deliveryCost);
+                for (CoffeeOrderItem item : orderItems) {
+                    if(item.getCoffeeType().getId() == typeId)
+                    {
+                        item.setCost(cost);
+                        break;
+                    }
+                }
+            }
+            
+            float coffeeCost = calculateCostStatement.getFloat("coffee");
+            order.setCoffeeCost(coffeeCost);
+            
+            float deliveryCost = calculateCostStatement.getFloat("delivery");
+            order.setDeliveryCost(deliveryCost);
+            
+            order.setTotalCost(coffeeCost + deliveryCost);
+        }
     }
     
 //    public static void main(String[] args) {
@@ -110,7 +144,7 @@ public class CoffeeDAO {
 //            Logger.getLogger(CoffeeDAO.class.getName()).log(Level.SEVERE, null, ex);
 //        }
 //    }
-    
+    //TODO: get in the same connection
     private long getNextID(String tableName) throws SQLException {
         final String sql = String.format("SELECT MAX(id) FROM %s", tableName);
         try(Connection connection = DBConnectionManager.getInstance().getConnection();
