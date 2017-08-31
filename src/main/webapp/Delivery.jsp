@@ -25,7 +25,7 @@
                     </tr>
                 </table>
             </form>   
-
+            <div style="color:red">${error}</div>
             <table border="1" cellpadding="5">
                 <tr>
                     <th>Coffee Type</th>

@@ -28,7 +28,7 @@
                         </tr>
                     </c:forEach>
                     <tr>
-                        <td colspan="3"></td>
+                        <td colspan="3" style="color:red">${error}</td>
                         <td><input type="submit" value="Create Order"/></td>
                     </tr>
                 </table>

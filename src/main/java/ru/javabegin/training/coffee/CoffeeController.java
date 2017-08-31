@@ -53,7 +53,38 @@ public class CoffeeController extends HttpServlet {
         }
     }
     
+    private boolean validateListCoffee(HttpServletRequest request){
+        boolean hasPositive = false;
+        Map<String, String[]> parameters = request.getParameterMap();
+        for (String key : parameters.keySet()) {
+            String value = parameters.get(key)[0];
+            if (!value.isEmpty()) {
+                long id = Long.parseLong(key);
+                try {
+                    int quantity = Integer.parseInt(value);
+                    
+                    if(quantity < 0)
+                        throw new NumberFormatException();
+                    
+                    if(quantity > 0)
+                        hasPositive = true;
+                } catch (NumberFormatException e) {
+                    request.setAttribute("error", String.format("Quantitry %s for id=%d is not correct!", value,id));
+                    return false;
+                }
+            }
+        }
+        if(!hasPositive)
+            request.setAttribute("error", "Enter positive value for some Coffee!");
+        return hasPositive;
+    }
+    
     private void delivery(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        if(!validateListCoffee(request)){
+            response.sendRedirect(request.getHeader("Referer"));
+            return;
+        }
+        
         prepareOrder(request);
         RequestDispatcher rd = request.getRequestDispatcher("/Delivery.jsp");
         rd.forward(request, response);
@@ -85,7 +116,21 @@ public class CoffeeController extends HttpServlet {
         }
     }
 
+    private boolean validateAddress(HttpServletRequest request) {
+        String address = (String)request.getParameter("address");
+        if(address == null || address.isEmpty()){
+            request.setAttribute("error", "Input Address!");
+            return false;
+        }else
+            return true;
+    }
+    
     private void createOrder(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        if (!validateAddress(request)) {
+            response.sendRedirect(request.getHeader("Referer"));
+            return;
+        }
+        
         List<CoffeeOrderItem> orderItems = (List<CoffeeOrderItem>)request.getSession().getAttribute("orderItems");
         CoffeeOrder order = (CoffeeOrder)request.getSession().getAttribute("order");
         
