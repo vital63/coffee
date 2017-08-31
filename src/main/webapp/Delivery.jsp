@@ -5,10 +5,22 @@
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <title>JSP Page</title>
+        <script type="text/javascript">
+            function validate(){
+                var errorMes = document.getElementById('error');
+                var address = document.getElementById('address');
+                if(address.value === ''){
+                    errorMes.innerHTML = "Input Address!";
+                    return false;
+                }
+                else
+                    return true;
+            }
+        </script>
     </head>
     <body>
         <div align="center">
-            <form action="CreateOrder">
+            <form action="CreateOrder" onsubmit="return validate()">
                 <table border="1" cellpadding="5">
                     <tr><th colspan="2">Delivery Information</th></tr>
                     <tr>
@@ -17,7 +29,7 @@
                     </tr>
                     <tr>
                         <th>Address</th>
-                        <td><input name="address"></td>
+                        <td><input id="address" name="address"></td>
                     </tr>
                     <tr>
                         <td colspan="1"></td>
@@ -25,7 +37,7 @@
                     </tr>
                 </table>
             </form>   
-            <div style="color:red">${error}</div>
+            <div id="error" style="color:red">${error}</div>
             <table border="1" cellpadding="5">
                 <tr>
                     <th>Coffee Type</th>

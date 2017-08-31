@@ -13,7 +13,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 //TODO: internationalization
-//TODO: validation
 public class CoffeeController extends HttpServlet {
 
     /**
