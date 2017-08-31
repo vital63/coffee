@@ -144,16 +144,13 @@ public class CoffeeDAO {
 //            Logger.getLogger(CoffeeDAO.class.getName()).log(Level.SEVERE, null, ex);
 //        }
 //    }
-    //TODO: get in the same connection
-    private long getNextID(String tableName) throws SQLException {
+
+    private long getNextID(String tableName, Statement statement) throws SQLException {
         final String sql = String.format("SELECT MAX(id) FROM %s", tableName);
-        try(Connection connection = DBConnectionManager.getInstance().getConnection();
-            Statement statement = connection.createStatement();
-            ResultSet resultSet = statement.executeQuery(sql);) 
-        {
-            if(resultSet.next())
-                return resultSet.getInt(1) + 1;
-        } 
+        ResultSet resultSet = statement.executeQuery(sql);
+        if(resultSet.next())
+            return resultSet.getInt(1) + 1;
+        
         return -1;
     }
     
@@ -164,26 +161,26 @@ public class CoffeeDAO {
 //    }
     
     public void createOrder(CoffeeOrder order, List<CoffeeOrderItem> orderItems) throws SQLException {
-        long orderID = getNextID("coffeeorder");
-        order.setId(orderID);
-        String formattedDate = (new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")).format(order.getOrderDate());
-        final String sql = String.format(Locale.US,
-            "INSERT INTO coffeeorder (id, order_date, name, delivery_address, cost)\n"
-            + "VALUES (%d, '%s', '%s', '%s', %f)",
-            orderID, formattedDate, order.getName(), order.getDeliveryAddress(), order.getTotalCost());
-        
         Connection connection = DBConnectionManager.getInstance().getConnection();
         try (Statement statement = connection.createStatement();) 
         {
+            long orderID = getNextID("coffeeorder", statement);
+            order.setId(orderID);
+            String formattedDate = (new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")).format(order.getOrderDate());
+            final String sql = String.format(Locale.US,
+                    "INSERT INTO coffeeorder (id, order_date, name, delivery_address, cost)\n"
+                            + "VALUES (%d, '%s', '%s', '%s', %f)",
+                    orderID, formattedDate, order.getName(), order.getDeliveryAddress(), order.getTotalCost());
+            
             connection.setAutoCommit(false);
-            if (statement.executeUpdate(sql) > 0);
+            if (statement.executeUpdate(sql) > 0)
             {
-                long orderItemID = getNextID("coffeeorderitem");
                 for(CoffeeOrderItem orderItem: orderItems){
-                    createOrderItem(orderItem, statement, orderItemID++);
+                    createOrderItem(orderItem, statement);
                 }
                 connection.commit();
-            }
+            }else
+                connection.rollback();
         } catch (SQLException e) {
             connection.rollback();
             throw e;
@@ -193,7 +190,8 @@ public class CoffeeDAO {
         }
     }
     
-    private void createOrderItem(CoffeeOrderItem orderItem, Statement statement, long orderItemID) throws SQLException{
+    private void createOrderItem(CoffeeOrderItem orderItem, Statement statement) throws SQLException{
+        long orderItemID = getNextID("coffeeorderitem", statement);
         final String sql = String.format(
             "INSERT INTO coffeeorderitem (id, type_id, order_id, quantity) VALUES (%d, %d, %d, %d)", 
             orderItemID, orderItem.getCoffeeType().getId(), orderItem.getCoffeeOrder().getId(),
