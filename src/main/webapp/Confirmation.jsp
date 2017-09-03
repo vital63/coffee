@@ -1,10 +1,5 @@
-<%-- 
-    Document   : Confirmation
-    Created on : Aug 30, 2017, 10:35:42 AM
-    Author     : Витал
---%>
-
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <!DOCTYPE html>
 <html>
     <head>
@@ -15,12 +10,13 @@
         <div align="center">
             <table border="1" cellpadding="5">
                 <tr>
-                    <th>Confirmation</th>
+                    <th>${bundle.getString("confirmation")}</th>
                 </tr>
                 <tr>
-                    <td>Your order is received!</td>
+                    <td>${bundle.getString("order_received")}</td>
                 </tr>
             </table>
+            <%@include file="footer.jspf" %>
         </div>
     </body>
 </html>

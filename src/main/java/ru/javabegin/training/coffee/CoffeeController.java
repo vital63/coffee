@@ -5,7 +5,9 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.ResourceBundle;
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -25,8 +27,25 @@ public class CoffeeController extends HttpServlet {
      * @throws IOException if an I/O error occurs
      */
     CoffeeDAO coffeeDAO = new CoffeeDAO();
+
+    private static void setMessageBundle(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException{
+        Locale locale;
+        String lang = request.getParameter("lang");
+        
+        if(lang != null && !lang.isEmpty()){
+            locale = Locale.forLanguageTag(lang);
+        }else if(request.getSession().getAttribute("bundle") == null){
+            locale = Locale.ENGLISH;
+        }else
+            return;
+        
+        ResourceBundle bundle = ResourceBundle.getBundle("locales.messages", locale);
+        request.getSession().setAttribute("bundle", bundle);
+    }
     
     protected void processRequest(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        setMessageBundle(request, response);
+        
         String action = request.getServletPath();
         System.out.println("action: " + action);
         switch (action) {
@@ -36,6 +55,9 @@ public class CoffeeController extends HttpServlet {
             case "/CreateOrder":
                 createOrder(request, response);
                 break;
+            case "/Confirmation":
+                confirm(request, response);
+                break;
             default:
                 listCoffee(request, response);
         }
@@ -43,10 +65,9 @@ public class CoffeeController extends HttpServlet {
     
     private void listCoffee(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         try {
-            RequestDispatcher rd = request.getRequestDispatcher("/CoffeeList.jsp");
             List<CoffeeType> coffeeList = coffeeDAO.listCoffeeType(false);
             request.setAttribute("coffeeList", coffeeList);
-            rd.forward(request, response);
+            forwardToView(request, response, "/CoffeeList.jsp");
         } catch (SQLException ex) {
             throw new ServletException(ex);
         }
@@ -58,6 +79,9 @@ public class CoffeeController extends HttpServlet {
         for (String key : parameters.keySet()) {
             String value = parameters.get(key)[0];
             if (!value.isEmpty()) {
+                if("lang".equals(key))
+                    continue;
+                
                 long id = Long.parseLong(key);
                 try {
                     int quantity = Integer.parseInt(value);
@@ -73,20 +97,25 @@ public class CoffeeController extends HttpServlet {
                 }
             }
         }
-        if(!hasPositive)
-            request.setAttribute("error", "Enter positive value for some Coffee!");
+        
+        if(!hasPositive){
+            ResourceBundle bundle = (ResourceBundle)request.getSession().getAttribute("bundle");
+            request.setAttribute("error", bundle.getString("enter_positive_value"));
+        }
+        
         return hasPositive;
     }
     
     private void delivery(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        if(!validateListCoffee(request)){
-            response.sendRedirect(request.getHeader("Referer"));
-            return;
+        if("POST".equals(request.getMethod())){
+            if(!validateListCoffee(request)){
+                response.sendRedirect(request.getHeader("Referer"));
+                return;
+            }
+            prepareOrder(request);
         }
         
-        prepareOrder(request);
-        RequestDispatcher rd = request.getRequestDispatcher("/Delivery.jsp");
-        rd.forward(request, response);
+        forwardToView(request, response, "/Delivery.jsp");
     }    
     
     private void prepareOrder(HttpServletRequest request) throws ServletException{
@@ -96,6 +125,9 @@ public class CoffeeController extends HttpServlet {
             List<CoffeeOrderItem> orderItems = new ArrayList<>();
             Map<String, String[]> parameters = request.getParameterMap();
             for (String key : parameters.keySet()) {
+                if ("lang".equals(key)) 
+                    continue;
+                
                 String value = parameters.get(key)[0];
                 if (!value.isEmpty()) {
                     CoffeeOrderItem orderItem = new CoffeeOrderItem();
@@ -141,8 +173,16 @@ public class CoffeeController extends HttpServlet {
         } catch (SQLException ex) {
             throw new ServletException(ex);
         }
-        RequestDispatcher rd = request.getRequestDispatcher("/Confirmation.jsp");
-        rd.forward(request, response);    
+        response.sendRedirect("Confirmation");
+    }
+    
+    private void confirm(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        forwardToView(request, response, "/Confirmation.jsp");
+    }
+    
+    private static void forwardToView(HttpServletRequest request, HttpServletResponse response, String path) throws ServletException, IOException{
+        RequestDispatcher rd = request.getRequestDispatcher(path);
+        rd.forward(request, response);   
     }
     // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
     /**

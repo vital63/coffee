@@ -1,0 +1,10 @@
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ page pageEncoding="UTF-8" %>
+
+<div>
+    <a href="?lang=ru" <c:if test="${bundle.getLocale().toLanguageTag()=='ru'}">style="font-weight: bold"</c:if>>ru</a>
+    <a href="?lang=en" <c:if test="${bundle.getLocale().toLanguageTag()=='en'}">style="font-weight: bold"</c:if>>en</a>
+</div>
+<div>
+    <a href="/coffee">${bundle.getString("to_main_page")}</a>
+</div>

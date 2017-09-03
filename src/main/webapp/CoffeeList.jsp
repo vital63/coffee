@@ -17,28 +17,29 @@
                     
                     var intValue = parseInt(input.value); 
                     if (isNaN(intValue) || (input.value < 0)){
-                        errorMes.innerHTML = 'Quantitry ' + input.value + ' for id=' + input.name + ' is not correct!';
+                        errorMes.innerHTML = '${bundle.getString("quantity")} ' + input.value + ' ${bundle.getString("for_id")}=' +
+                               input.name + ' ${bundle.getString("is_not_correct")}!';
                         return false;
-                    }
-                    if(input.value > 0)
+                    } else if(input.value > 0) {
                         hasPositive = true;
+                    }
                 }
                 if(!hasPositive)
-                    errorMes.innerHTML = "Enter positive value for some Coffee!";
+                    errorMes.innerHTML = "${bundle.getString("enter_positive_value")}";
                 return hasPositive;
             }
         </script>
     </head>
     <body>
         <div align="center">
-            <form action="Delivery" onsubmit="return validate()">
+            <form action="Delivery" method="POST" onsubmit="return validate()">
                 <table border="1" cellpadding="5">
-                    <caption><h2>Choose Coffee</h2></caption>
+                    <caption><h2>${bundle.getString("choose_coffee")}</h2></caption>
                     <tr>
                         <th>ID</th>
-                        <th>Type</th>
-                        <th>Price</th>
-                        <th>Quantity</th>
+                        <th>${bundle.getString("type")}</th>
+                        <th>${bundle.getString("price")}</th>
+                        <th>${bundle.getString("quantity")}</th>
                     </tr>
                     <c:forEach var="coffee" items="${coffeeList}">
                         <tr>
@@ -52,10 +53,11 @@
                     </c:forEach>
                     <tr>
                         <td id="error" colspan="3" style="color:red">${error}</td>
-                        <td><input type="submit" value="Create Order"/></td>
+                        <td><input type="submit" value=${bundle.getString("create_order")}/></td>
                     </tr>
                 </table>
             </form>   
+            <%@include file="footer.jspf" %>
         </div>
     </body>
 </html>

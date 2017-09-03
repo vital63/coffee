@@ -20,30 +20,30 @@
     </head>
     <body>
         <div align="center">
-            <form action="CreateOrder" onsubmit="return validate()">
+            <form action="CreateOrder" method="POST" onsubmit="return validate()">
                 <table border="1" cellpadding="5">
-                    <tr><th colspan="2">Delivery Information</th></tr>
+                    <tr><th colspan="2">${bundle.getString("delivery_information")}</th></tr>
                     <tr>
-                        <th>Name</th>
+                        <th>${bundle.getString("name")}</th>
                         <td><input name="name"></td>
                     </tr>
                     <tr>
-                        <th>Address</th>
+                        <th>${bundle.getString("address")}</th>
                         <td><input id="address" name="address"></td>
                     </tr>
                     <tr>
                         <td colspan="1"></td>
-                        <td><input type="submit" value="Create Order"/></td>
+                        <td><input type="submit" value=${bundle.getString("create_order")}/></td>
                     </tr>
                 </table>
             </form>   
             <div id="error" style="color:red">${error}</div>
             <table border="1" cellpadding="5">
                 <tr>
-                    <th>Coffee Type</th>
-                    <th>Price</th>
-                    <th>Quantity</th>
-                    <th>Total</th>
+                    <th>${bundle.getString("type")}</th>
+                    <th>${bundle.getString("price")}</th>
+                    <th>${bundle.getString("quantity")}</th>
+                    <th>${bundle.getString("total")}</th>
                 </tr>
                 
                 <c:forEach var="orderItem" items="${orderItems}">
@@ -56,19 +56,19 @@
                 </c:forEach>
                 
                 <tr>
-                    <th colspan="3">Cost</th>
+                    <th colspan="3">${bundle.getString("cost")}</th>
                     <td><c:out value="${order.coffeeCost}" /></td>
                 </tr>
                 <tr>
-                    <th colspan="3">Delivery Cost</th>
+                    <th colspan="3">${bundle.getString("delivery_cost")}</th>
                     <td><c:out value="${order.deliveryCost}" /></td>
                 </tr>
                 <tr>
-                    <th colspan="3">Total Cost</th>
+                    <th colspan="3">${bundle.getString("total_cost")}</th>
                     <td><c:out value="${order.totalCost}" /></td>
                 </tr>
             </table>
-            
+            <%@include file="footer.jspf" %>
         </div>
         
     </body>

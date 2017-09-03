@@ -46,6 +46,7 @@ public class ValidationFilter implements Filter {
         if (debug) {
             log("ValidationFilter:DoBeforeProcessing");
         }
+        request.setCharacterEncoding("UTF-8");
 
         // Write code here to process the request and/or response before
         // the rest of the filter chain is invoked.
