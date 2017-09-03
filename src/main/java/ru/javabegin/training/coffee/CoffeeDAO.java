@@ -16,9 +16,14 @@ import java.util.logging.Logger;
 
 public class CoffeeDAO {
     
-    public List<CoffeeType> listCoffeeType(boolean withDisabled) throws SQLException{
+    public List<CoffeeType> listCoffeeType(Locale locale, boolean withDisabled) throws SQLException{
         List<CoffeeType> result = new ArrayList<>();
         String sql = "SELECT * FROM coffeetype";
+        
+        if("ru".equalsIgnoreCase(locale.toLanguageTag())){
+            sql = "SELECT t.id, tr.type_name, t.price, t.disabled FROM coffee.coffeetype t "
+                + "LEFT JOIN coffeetypetranslate_ru tr on tr.id=t.id";
+        }        
         try(Connection connection = DBConnectionManager.getInstance().getConnection();
             Statement statement = connection.createStatement();
             ResultSet resultSet = statement.executeQuery(sql);)

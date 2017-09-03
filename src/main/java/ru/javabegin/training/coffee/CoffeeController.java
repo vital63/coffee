@@ -14,7 +14,6 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-//TODO: internationalization
 public class CoffeeController extends HttpServlet {
 
     /**
@@ -65,7 +64,9 @@ public class CoffeeController extends HttpServlet {
     
     private void listCoffee(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         try {
-            List<CoffeeType> coffeeList = coffeeDAO.listCoffeeType(false);
+            ResourceBundle bundle = (ResourceBundle)request.getSession().getAttribute("bundle");
+            Locale locale = bundle == null ? null : bundle.getLocale();
+            List<CoffeeType> coffeeList = coffeeDAO.listCoffeeType(locale, false);
             request.setAttribute("coffeeList", coffeeList);
             forwardToView(request, response, "/CoffeeList.jsp");
         } catch (SQLException ex) {
@@ -139,7 +140,6 @@ public class CoffeeController extends HttpServlet {
                 }
             }
             coffeeDAO.calculateCost(order, orderItems);
-            System.out.println("orderItems.size: " + orderItems.size());
             request.getSession().setAttribute("orderItems", orderItems);
             request.getSession().setAttribute("order", order);
         } catch (SQLException ex) {

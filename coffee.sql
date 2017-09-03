@@ -21,6 +21,19 @@ create index CT_I on CoffeeType (
 );
 
 --
+-- Перевод сортов кофе на русский язык
+--
+create table CoffeeTypeTranslate_Ru (
+  id int not null, -- pk
+  type_name varchar(200) not null, -- название
+  primary key (id)
+) type=InnoDB;
+
+create index CTT_I on CoffeeType (
+  id asc
+);
+
+--
 -- Заказ
 --
 create table CoffeeOrder (
