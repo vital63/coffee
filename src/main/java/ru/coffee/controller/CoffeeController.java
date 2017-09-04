@@ -2,52 +2,19 @@ package ru.coffee.controller;
 
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.ResourceBundle;
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import ru.coffee.dao.CoffeeDAO;
-import ru.coffee.domain.CoffeeOrder;
-import ru.coffee.domain.CoffeeOrderItem;
-import ru.coffee.domain.CoffeeType;
+import ru.coffee.service.CoffeeService;
+import ru.coffee.validator.Validator;
 
 public class CoffeeController extends HttpServlet {
 
-    /**
-     * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
-     * methods.
-     *
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
-    CoffeeDAO coffeeDAO = new CoffeeDAO();
-
-    private static void setMessageBundle(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException{
-        Locale locale;
-        String lang = request.getParameter("lang");
-        
-        if(lang != null && !lang.isEmpty()){
-            locale = Locale.forLanguageTag(lang);
-        }else if(request.getSession().getAttribute("bundle") == null){
-            locale = Locale.ENGLISH;
-        }else
-            return;
-        
-        ResourceBundle bundle = ResourceBundle.getBundle("locales.messages", locale);
-        request.getSession().setAttribute("bundle", bundle);
-    }
+    private CoffeeService coffeeService = new CoffeeService();
     
     protected void processRequest(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        setMessageBundle(request, response);
         String action = request.getServletPath();
         switch (action) {
             case "/Delivery":
@@ -66,115 +33,30 @@ public class CoffeeController extends HttpServlet {
     
     private void listCoffee(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         try {
-            ResourceBundle bundle = (ResourceBundle)request.getSession().getAttribute("bundle");
-            Locale locale = bundle == null ? null : bundle.getLocale();
-            List<CoffeeType> coffeeList = coffeeDAO.listCoffeeType(locale, false);
-            request.setAttribute("coffeeList", coffeeList);
+            coffeeService.listCoffee(request);
             forwardToView(request, response, "/CoffeeList.jsp");
         } catch (SQLException ex) {
             throw new ServletException(ex);
         }
     }
     
-    private boolean validateListCoffee(HttpServletRequest request){
-        boolean hasPositive = false;
-        Map<String, String[]> parameters = request.getParameterMap();
-        for (String key : parameters.keySet()) {
-            String value = parameters.get(key)[0];
-            if (!value.isEmpty()) {
-                if("lang".equals(key))
-                    continue;
-                
-                long id = Long.parseLong(key);
-                try {
-                    int quantity = Integer.parseInt(value);
-                    
-                    if(quantity < 0)
-                        throw new NumberFormatException();
-                    
-                    if(quantity > 0)
-                        hasPositive = true;
-                } catch (NumberFormatException e) {
-                    request.setAttribute("error", String.format("Quantitry %s for id=%d is not correct!", value,id));
-                    return false;
-                }
-            }
-        }
-        
-        if(!hasPositive){
-            ResourceBundle bundle = (ResourceBundle)request.getSession().getAttribute("bundle");
-            request.setAttribute("error", bundle.getString("enter_positive_value"));
-        }
-        
-        return hasPositive;
-    }
-    
     private void delivery(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         if("POST".equals(request.getMethod())){
-            if(!validateListCoffee(request)){
+            if(!Validator.validateListCoffee(request)){
                 response.sendRedirect(request.getHeader("Referer"));
                 return;
             }
-            prepareOrder(request);
+            coffeeService.prepareOrder(request);
         }
-        
         forwardToView(request, response, "/Delivery.jsp");
     }    
     
-    private void prepareOrder(HttpServletRequest request) throws ServletException{
-        try {
-            CoffeeOrder order = new CoffeeOrder();
-            order.setOrderDate(new Date());
-            List<CoffeeOrderItem> orderItems = new ArrayList<>();
-            Map<String, String[]> parameters = request.getParameterMap();
-            for (String key : parameters.keySet()) {
-                if ("lang".equals(key)) 
-                    continue;
-                
-                String value = parameters.get(key)[0];
-                if (!value.isEmpty()) {
-                    CoffeeOrderItem orderItem = new CoffeeOrderItem();
-                    CoffeeType coffeeType = coffeeDAO.getCoffeeTypeById(Long.parseLong(key));
-                    orderItem.setCoffeeType(coffeeType);
-                    orderItem.setQuantity(Integer.parseInt(value));
-                    orderItem.setCoffeeOrder(order);
-                    orderItems.add(orderItem);
-                }
-            }
-            coffeeDAO.calculateCost(order, orderItems);
-            request.getSession().setAttribute("orderItems", orderItems);
-            request.getSession().setAttribute("order", order);
-        } catch (SQLException ex) {
-            throw new ServletException(ex);
-        }
-    }
-
-    private boolean validateAddress(HttpServletRequest request) {
-        String address = (String)request.getParameter("address");
-        if(address == null || address.isEmpty()){
-            request.setAttribute("error", "Input Address!");
-            return false;
-        }else
-            return true;
-    }
-    
     private void createOrder(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        if (!validateAddress(request)) {
+        if (!Validator.validateAddress(request)) {
             response.sendRedirect(request.getHeader("Referer"));
             return;
         }
-        
-        List<CoffeeOrderItem> orderItems = (List<CoffeeOrderItem>)request.getSession().getAttribute("orderItems");
-        CoffeeOrder order = (CoffeeOrder)request.getSession().getAttribute("order");
-        
-        order.setName(request.getParameter("name"));
-        order.setDeliveryAddress(request.getParameter("address"));
-        
-        try {
-            coffeeDAO.createOrder(order, orderItems);
-        } catch (SQLException ex) {
-            throw new ServletException(ex);
-        }
+        coffeeService.createOrder(request);
         response.sendRedirect("Confirmation");
     }
     

@@ -1,7 +1,7 @@
 /*
 Set UTF-8 encoding in request and move error message from request to session if it need.
  */
-package filter;
+package ru.coffee.filter;
 
 import java.io.IOException;
 import java.io.PrintStream;
@@ -10,7 +10,9 @@ import java.io.StringWriter;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Iterator;
+import java.util.Locale;
 import java.util.Map;
+import java.util.ResourceBundle;
 import java.util.Set;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -39,6 +41,22 @@ public class ServiceFilter implements Filter {
     public ServiceFilter() {
     }    
     
+    private static void setMessageBundle(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        Locale locale;
+        String lang = request.getParameter("lang");
+
+        if (lang != null && !lang.isEmpty()) {
+            locale = Locale.forLanguageTag(lang);
+        } else if (request.getSession().getAttribute("bundle") == null) {
+            locale = Locale.ENGLISH;
+        } else {
+            return;
+        }
+
+        ResourceBundle bundle = ResourceBundle.getBundle("locales.messages", locale);
+        request.getSession().setAttribute("bundle", bundle);
+    }
+    
     private void doBeforeProcessing(RequestWrapper request, ResponseWrapper response)
             throws IOException, ServletException {
         if (debug) {
@@ -46,6 +64,8 @@ public class ServiceFilter implements Filter {
         }
         request.setCharacterEncoding("UTF-8");
 
+        setMessageBundle(request, response);
+        
         // Write code here to process the request and/or response before
         // the rest of the filter chain is invoked.
         // For example, a filter that implements setParameter() on a request
