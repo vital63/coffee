@@ -1,9 +1,7 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+Set UTF-8 encoding in request and move error message from request to session if it need.
  */
-package ru.javabegin.training.coffee;
+package filter;
 
 import java.io.IOException;
 import java.io.PrintStream;
@@ -29,7 +27,7 @@ import javax.servlet.http.HttpServletResponseWrapper;
  *
  * @author Витал
  */
-public class ValidationFilter implements Filter {
+public class ServiceFilter implements Filter {
     
     private static final boolean debug = false;
 
@@ -38,7 +36,7 @@ public class ValidationFilter implements Filter {
     // configured. 
     private FilterConfig filterConfig = null;
     
-    public ValidationFilter() {
+    public ServiceFilter() {
     }    
     
     private void doBeforeProcessing(RequestWrapper request, ResponseWrapper response)

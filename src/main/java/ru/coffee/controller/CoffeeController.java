@@ -1,4 +1,4 @@
-package ru.javabegin.training.coffee;
+package ru.coffee.controller;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -13,6 +13,10 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import ru.coffee.dao.CoffeeDAO;
+import ru.coffee.domain.CoffeeOrder;
+import ru.coffee.domain.CoffeeOrderItem;
+import ru.coffee.domain.CoffeeType;
 
 public class CoffeeController extends HttpServlet {
 
@@ -44,9 +48,7 @@ public class CoffeeController extends HttpServlet {
     
     protected void processRequest(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         setMessageBundle(request, response);
-        
         String action = request.getServletPath();
-        System.out.println("action: " + action);
         switch (action) {
             case "/Delivery":
                 delivery(request, response);

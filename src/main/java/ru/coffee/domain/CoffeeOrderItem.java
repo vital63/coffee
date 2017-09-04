@@ -1,4 +1,4 @@
-package ru.javabegin.training.coffee;
+package ru.coffee.domain;
 
 public class CoffeeOrderItem {
     private Long id;

@@ -1,4 +1,4 @@
-package ru.javabegin.training.coffee;
+package ru.coffee.service;
 
 import java.sql.Connection;
 import java.sql.DriverManager;

@@ -1,4 +1,4 @@
-package ru.javabegin.training.coffee;
+package ru.coffee.dao;
 
 import java.sql.CallableStatement;
 import java.sql.Connection;
@@ -13,6 +13,10 @@ import java.util.List;
 import java.util.Locale;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import ru.coffee.domain.CoffeeOrder;
+import ru.coffee.domain.CoffeeOrderItem;
+import ru.coffee.domain.CoffeeType;
+import ru.coffee.service.DBConnectionManager;
 
 public class CoffeeDAO {
     
