@@ -3,15 +3,14 @@ package ru.javabegin.training.coffee;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.ResourceBundle;
 
 public class DBConnectionManager {
-    //TODO: move into external properties file
-    private final String driver = "com.mysql.jdbc.Driver";
-    private final String dbURL = "jdbc:mysql:///coffee";
-    private final String user = "root";
-    private final String pwd = "root";
+    
+    private String driver;
+    private String dbURL;
+    private String user;
+    private String password;
     
     private DBConnectionManager() {
     }
@@ -24,17 +23,26 @@ public class DBConnectionManager {
         return DBConnectionManagerHolder.INSTANCE;
     }
     
-    public Connection getConnection() {
+    public Connection getConnection() throws SQLException{
         Connection result = null;
         try {
+            loadDBProperties();
             Class.forName(driver);
-            result = DriverManager.getConnection(dbURL, user, pwd);
-        } catch (ClassNotFoundException | SQLException ex) {
-            Logger.getLogger(DBConnectionManager.class.getName()).log(Level.SEVERE, null, ex);
+            result = DriverManager.getConnection(dbURL, user, password);
+        } catch (ClassNotFoundException e) {
+            throw new SQLException(e);
         }
         return result;
     }
 
+    private void loadDBProperties() throws SQLException{
+        ResourceBundle dbBundle = ResourceBundle.getBundle("db");
+        driver = dbBundle.getString("db.driver");
+        dbURL = dbBundle.getString("db.url");
+        user = dbBundle.getString("db.user");
+        password = dbBundle.getString("db.password");      
+    }
+    
 //    public static void main(String[] args) {
 //        DBConnectionManager manager = DBConnectionManager.getInstance();
 //        try {
