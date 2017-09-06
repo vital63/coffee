@@ -16,6 +16,10 @@ public class CoffeeType {
     public CoffeeType() {
     }
 
+    public CoffeeType(Long id) {
+        this.id = id;
+    }
+
     @Override
     public String toString() {
         return "Coffee{" + "id=" + id + ", type=" + type + ", price=" + price + ", disabled=" + disabled + '}';

@@ -14,6 +14,14 @@ public class CoffeeOrder {
     public CoffeeOrder() {
     }
 
+    public CoffeeOrder(Long id, Date orderDate, String name, String deliveryAddress, Float totalCost) {
+        this.id = id;
+        this.orderDate = orderDate;
+        this.name = name;
+        this.deliveryAddress = deliveryAddress;
+        this.totalCost = totalCost;
+    }
+
     public Long getId() {
         return id;
     }

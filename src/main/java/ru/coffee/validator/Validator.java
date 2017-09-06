@@ -18,6 +18,7 @@ public class Validator {
 
     public static boolean validateListCoffee(HttpServletRequest request) {
         boolean hasPositive = false;
+        ResourceBundle bundle = (ResourceBundle) request.getSession().getAttribute("bundle");
         Map<String, String[]> parameters = request.getParameterMap();
         for (String key : parameters.keySet()) {
             String value = parameters.get(key)[0];
@@ -35,13 +36,13 @@ public class Validator {
                         hasPositive = true;
                     }
                 } catch (NumberFormatException e) {
-                    request.setAttribute("error", String.format("Quantitry %s for id=%d is not correct!", value, id));
+                    String error = String.format(bundle.getString("quantity_not_correct"), value, id);
+                    request.setAttribute("error", error);
                     return false;
                 }
             }
         }
         if (!hasPositive) {
-            ResourceBundle bundle = (ResourceBundle) request.getSession().getAttribute("bundle");
             request.setAttribute("error", bundle.getString("enter_positive_value"));
         }
         return hasPositive;

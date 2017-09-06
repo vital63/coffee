@@ -41,7 +41,7 @@ public class ServiceFilter implements Filter {
     public ServiceFilter() {
     }    
     
-    private static void setMessageBundle(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    public static void setMessageBundle(HttpServletRequest request) throws ServletException, IOException {
         Locale locale;
         String lang = request.getParameter("lang");
 
@@ -64,7 +64,7 @@ public class ServiceFilter implements Filter {
         }
         request.setCharacterEncoding("UTF-8");
 
-        setMessageBundle(request, response);
+        setMessageBundle(request);
         
         // Write code here to process the request and/or response before
         // the rest of the filter chain is invoked.

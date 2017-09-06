@@ -6,8 +6,12 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import ru.coffee.domain.CoffeeOrder;
@@ -21,7 +25,7 @@ public class CoffeeDAO {
         List<CoffeeType> result = new ArrayList<>();
         String sql = "SELECT * FROM coffeetype";
         
-        if("ru".equalsIgnoreCase(locale.toLanguageTag())){
+        if(locale != null && "ru".equalsIgnoreCase(locale.toLanguageTag())){
             sql = "SELECT t.id, tr.type_name, t.price, t.disabled FROM coffee.coffeetype t "
                 + "LEFT JOIN coffeetypetranslate_ru tr on tr.id=t.id";
         }        
@@ -150,13 +154,22 @@ public class CoffeeDAO {
 //            Logger.getLogger(CoffeeDAO.class.getName()).log(Level.SEVERE, null, ex);
 //        }
 //    }
+    
+    
+    public long getNextID(String tableName) throws SQLException {
+        try (Connection connection = DBConnectionManager.getInstance().getConnection();
+             Statement statement = connection.createStatement();) 
+        {
+            return getNextID(tableName, statement);
+        }
+    }
 
     private long getNextID(String tableName, Statement statement) throws SQLException {
         final String sql = String.format("SELECT MAX(id) FROM %s", tableName);
         ResultSet resultSet = statement.executeQuery(sql);
-        if(resultSet.next())
+        if(resultSet.next()){
             return resultSet.getInt(1) + 1;
-        
+        }
         return -1;
     }
     
@@ -166,13 +179,63 @@ public class CoffeeDAO {
 //        System.out.println(coffeeDAO.getNextID("coffeetype"));
 //    }
     
+    public CoffeeOrder getOrder(long id, List<CoffeeOrderItem> orderItems) throws SQLException, ParseException{
+        CoffeeOrder result = null;
+        if(orderItems == null)
+            return result;
+        
+        orderItems.clear();
+        final String sql = String.format("SELECT * FROM coffeeorder WHERE id = %d", id);
+        
+        try (Connection connection = DBConnectionManager.getInstance().getConnection();
+             Statement statement = connection.createStatement();
+             ResultSet resultSet = statement.executeQuery(sql); )
+        {
+            if(!resultSet.next()){
+                return result;
+            }
+            
+            assert(id == resultSet.getInt("id"));
+            String dateString = resultSet.getString("order_date");
+            Date orderDate = coffeeOrderDateFormat.parse(dateString);
+            String name = resultSet.getString("name");
+            String deliveryAddress = resultSet.getString("delivery_address");
+            float totalCost = resultSet.getFloat("cost");
+            
+            result = new CoffeeOrder(id, orderDate, name, deliveryAddress, totalCost);
+            
+            getOrderItems(result, orderItems, statement);
+        }
+        return result;
+    }
+    
+    private void getOrderItems(CoffeeOrder order, List<CoffeeOrderItem> orderItems, Statement statement) throws SQLException{
+        final String sql = String.format("SELECT * FROM coffeeorderitem WHERE order_id = %d", order.getId());
+        ResultSet resultSet = statement.executeQuery(sql);
+        while (resultSet.next()){
+            long id = resultSet.getLong("id");
+            
+            long typeId = resultSet.getLong("type_id");
+            CoffeeType coffeeType = getCoffeeTypeById(typeId);
+            
+            long orderId = resultSet.getLong("order_id");
+            assert(orderId == order.getId());
+            
+            int quantity = resultSet.getInt("quantity");
+            
+            orderItems.add(new CoffeeOrderItem(id, coffeeType, order, quantity, 0));
+        }
+    }
+    
+    private SimpleDateFormat coffeeOrderDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
+
     public void createOrder(CoffeeOrder order, List<CoffeeOrderItem> orderItems) throws SQLException {
         Connection connection = DBConnectionManager.getInstance().getConnection();
         try (Statement statement = connection.createStatement();) 
         {
             long orderID = getNextID("coffeeorder", statement);
             order.setId(orderID);
-            String formattedDate = (new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")).format(order.getOrderDate());
+            String formattedDate = coffeeOrderDateFormat.format(order.getOrderDate());
             final String sql = String.format(Locale.US,
                     "INSERT INTO coffeeorder (id, order_date, name, delivery_address, cost)\n"
                             + "VALUES (%d, '%s', '%s', '%s', %f)",
@@ -203,6 +266,7 @@ public class CoffeeDAO {
             orderItemID, orderItem.getCoffeeType().getId(), orderItem.getCoffeeOrder().getId(),
             orderItem.getQuantity());
         statement.executeUpdate(sql);
+        orderItem.setId(orderItemID);
     }
     
 //    private static CoffeeOrderItem createCoffeeOrderItem(CoffeeDAO coffeeDAO, CoffeeOrder order, int coffeeType, int quantity){

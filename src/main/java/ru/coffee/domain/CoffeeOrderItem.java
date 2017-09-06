@@ -1,5 +1,7 @@
 package ru.coffee.domain;
 
+import java.util.Objects;
+
 public class CoffeeOrderItem {
     private Long id;
     private CoffeeType coffeeType;
@@ -10,6 +12,20 @@ public class CoffeeOrderItem {
     public CoffeeOrderItem() {
     }
 
+    public CoffeeOrderItem(Long coffeeTypeID, Integer quantity, float cost) {
+        coffeeType = new CoffeeType(coffeeTypeID);
+        this.quantity = quantity;
+        this.cost = cost;
+    }
+
+    public CoffeeOrderItem(Long id, CoffeeType coffeeType, CoffeeOrder coffeeOrder, Integer quantity, float cost) {
+        this.id = id;
+        this.coffeeType = coffeeType;
+        this.coffeeOrder = coffeeOrder;
+        this.quantity = quantity;
+        this.cost = cost;
+    }
+    
     public Long getId() {
         return id;
     }
@@ -48,5 +64,10 @@ public class CoffeeOrderItem {
 
     public void setCost(float cost) {
         this.cost = cost;
+    }
+
+    @Override
+    public String toString() {
+        return "CoffeeOrderItem{" + "id=" + id + ", coffeeType=" + coffeeType + ", coffeeOrder=" + coffeeOrder + ", quantity=" + quantity + ", cost=" + cost + '}';
     }
 }
