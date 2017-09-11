@@ -172,7 +172,7 @@ public class FakeHttpServletRequest implements HttpServletRequest{
         return session;
     }
 
-    @Override
+//    @Override
     public String changeSessionId() {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
@@ -222,7 +222,7 @@ public class FakeHttpServletRequest implements HttpServletRequest{
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
-    @Override
+//    @Override
     public <T extends HttpUpgradeHandler> T upgrade(Class<T> handlerClass) throws IOException, ServletException {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
@@ -247,7 +247,7 @@ public class FakeHttpServletRequest implements HttpServletRequest{
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
-    @Override
+//    @Override
     public long getContentLengthLong() {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }

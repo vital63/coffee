@@ -9,16 +9,16 @@ import java.sql.Statement;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import org.springframework.stereotype.Repository;
 import ru.coffee.domain.CoffeeOrder;
 import ru.coffee.domain.CoffeeOrderItem;
 import ru.coffee.domain.CoffeeType;
 import ru.coffee.service.DBConnectionManager;
 
+@Repository
 public class CoffeeDAO {
     
     public List<CoffeeType> listCoffeeType(Locale locale, boolean withDisabled) throws SQLException{

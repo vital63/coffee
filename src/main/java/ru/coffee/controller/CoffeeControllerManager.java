@@ -6,12 +6,16 @@ import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
 import ru.coffee.service.CoffeeService;
 import ru.coffee.validator.Validator;
 
+@Controller
 public class CoffeeControllerManager {
 
-    private final CoffeeService coffeeService = new CoffeeService();
+    @Autowired
+    private CoffeeService coffeeService;
     
     public void listCoffee(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         try {
@@ -49,5 +53,13 @@ public class CoffeeControllerManager {
     private static void forwardToView(HttpServletRequest request, HttpServletResponse response, String path) throws ServletException, IOException {
         RequestDispatcher rd = request.getRequestDispatcher(path);
         rd.forward(request, response);
+    }
+
+    public CoffeeService getCoffeeService() {
+        return coffeeService;
+    }
+
+    public void setCoffeeService(CoffeeService coffeeService) {
+        this.coffeeService = coffeeService;
     }
 }

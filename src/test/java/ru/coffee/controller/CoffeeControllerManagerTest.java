@@ -17,6 +17,8 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
 import ru.coffee.dao.CoffeeDAO;
 import ru.coffee.domain.CoffeeOrder;
 import ru.coffee.domain.CoffeeOrderItem;
@@ -26,6 +28,8 @@ import ru.coffee.filter.ServiceFilter;
 public class CoffeeControllerManagerTest {
     
     public CoffeeControllerManagerTest() {
+        ApplicationContext context = new ClassPathXmlApplicationContext("SpringConfig.xml");
+        controllerManager = (CoffeeControllerManager) context.getBean("coffeeControllerManager");
     }
     
     @BeforeClass
@@ -44,14 +48,14 @@ public class CoffeeControllerManagerTest {
     public void tearDown() {
     }
 
-    private CoffeeControllerManager instance = new CoffeeControllerManager();
+    private CoffeeControllerManager controllerManager;
     
     @Test
     public void testListCoffee() throws Exception {
         HttpServletRequest request = new FakeHttpServletRequest();
         ServiceFilter.setMessageBundle(request);
         
-        instance.listCoffee(request, null);
+        controllerManager.listCoffee(request, null);
         List<CoffeeType> coffeeList =(List<CoffeeType>)request.getAttribute("coffeeList");
         
         assertNotNull("coffeeList is null", coffeeList);
@@ -77,7 +81,7 @@ public class CoffeeControllerManagerTest {
 
         FakeHttpServletRequest request = getCorrectDeliveryRequest();
         FakeHttpServletResponse response = new FakeHttpServletResponse();
-        instance.delivery(request, response);
+        controllerManager.delivery(request, response);
         assertNull("Redirect is wrong: ", response.getRedirectLocation());
         assertNull("Error message must be null: ", request.getAttribute("error"));
         
@@ -107,7 +111,7 @@ public class CoffeeControllerManagerTest {
     public void testCreateOrder() throws Exception {
         FakeHttpServletRequest request = getCorrectDeliveryRequest();
         FakeHttpServletResponse response = new FakeHttpServletResponse();
-        instance.delivery(request, response);
+        controllerManager.delivery(request, response);
         
         testCreateOrderWithoutAddress(request, response);
         
@@ -155,7 +159,7 @@ public class CoffeeControllerManagerTest {
     
     private void testCreateOrderWithoutAddress(FakeHttpServletRequest request, FakeHttpServletResponse response) throws IOException, ServletException {
         request.setParameter("name", "Vital");
-        instance.createOrder(request, response);
+        controllerManager.createOrder(request, response);
         assertEquals("Redirect is wrong: ", "Referer", response.getRedirectLocation());
         String expectedErrorMessage = getStringFromBundleByKey(request, "input_address");
         assertEquals("Error message is wrong: ", expectedErrorMessage, request.getAttribute("error"));
@@ -164,7 +168,7 @@ public class CoffeeControllerManagerTest {
     private void testCreateOrderWithAddress(FakeHttpServletRequest request, FakeHttpServletResponse response) throws IOException, ServletException {
         request.setAttribute("error", null);
         request.setParameter("address", "Ratomka Station");
-        instance.createOrder(request, response);
+        controllerManager.createOrder(request, response);
         assertEquals("Redirect is wrong: ", "Confirmation", response.getRedirectLocation());
         assertNull("Error message must be null: ", request.getAttribute("error"));
     }
@@ -212,7 +216,7 @@ public class CoffeeControllerManagerTest {
     private void doTestErrorDeliveryRequest(FakeHttpServletRequest request, String expectedRedirect,
             String expectedErrorKey, Object... args) throws IOException, ServletException {
         FakeHttpServletResponse response = new FakeHttpServletResponse();
-        instance.delivery(request, response);
+        controllerManager.delivery(request, response);
         assertEquals("Redirect is wrong: ", expectedRedirect, response.getRedirectLocation());
 
         String expectedErrorMessage = getStringFromBundleByKey(request, expectedErrorKey, args);

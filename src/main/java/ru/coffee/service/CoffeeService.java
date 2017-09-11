@@ -9,14 +9,21 @@ import java.util.Map;
 import java.util.ResourceBundle;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 import ru.coffee.dao.CoffeeDAO;
 import ru.coffee.domain.CoffeeOrder;
 import ru.coffee.domain.CoffeeOrderItem;
 import ru.coffee.domain.CoffeeType;
 
+@Service
 public class CoffeeService {
+    
+    @Autowired
+    private CoffeeDAO coffeeDAO;
 
-    private CoffeeDAO coffeeDAO = new CoffeeDAO();
+    public CoffeeService() {
+    }
     
     public void prepareOrder(HttpServletRequest request) throws ServletException {
         try {
@@ -66,4 +73,14 @@ public class CoffeeService {
         List<CoffeeType> coffeeList = coffeeDAO.listCoffeeType(locale, false);
         request.setAttribute("coffeeList", coffeeList);
     }
+
+    public CoffeeDAO getCoffeeDAO() {
+        return coffeeDAO;
+    }
+
+    public void setCoffeeDAO(CoffeeDAO coffeeDAO) {
+        this.coffeeDAO = coffeeDAO;
+    }
+    
+    
 }

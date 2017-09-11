@@ -5,10 +5,18 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 public class CoffeeController extends HttpServlet {
 
-    CoffeeControllerManager controllerManager = new CoffeeControllerManager();
+    private CoffeeControllerManager controllerManager;
+
+    @Override
+    public void init() throws ServletException {
+        ApplicationContext context = new ClassPathXmlApplicationContext("SpringConfig.xml");
+        controllerManager = (CoffeeControllerManager)context.getBean("coffeeControllerManager");
+    }
     
     protected void processRequest(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String action = request.getServletPath();
