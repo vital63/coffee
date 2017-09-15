@@ -26,7 +26,7 @@
     <!--Настройки бина dataSource будем хранить в отдельном файле -->
     <bean id="propertyConfigurer"
           class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer"
-          p:location="db.properties" />
+          p:location="/WEB-INF/db.properties" />
 
     <!-- Непосредственно бин dataSource -->
     <bean id="dataSource"

@@ -8,6 +8,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
 import ru.coffee.service.CoffeeService;
 import ru.coffee.validator.Validator;
 
@@ -16,7 +17,8 @@ public class CoffeeControllerManager {
 
     @Autowired
     private CoffeeService coffeeService;
-    
+
+    @RequestMapping(value = "/")
     public void listCoffee(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         try {
             coffeeService.listCoffee(request);
@@ -26,6 +28,7 @@ public class CoffeeControllerManager {
         }
     }
 
+    @RequestMapping(value = "/Delivery")
     public void delivery(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         if ("POST".equals(request.getMethod())) {
             if (!Validator.validateListCoffee(request)) {
@@ -37,6 +40,7 @@ public class CoffeeControllerManager {
         forwardToView(request, response, "/WEB-INF/pages/Delivery.jsp");
     }
 
+    @RequestMapping(value = "/CreateOrder")
     public void createOrder(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         if (!Validator.validateAddress(request)) {
             response.sendRedirect(request.getHeader("Referer"));
@@ -46,6 +50,7 @@ public class CoffeeControllerManager {
         response.sendRedirect("Confirmation");
     }
 
+    @RequestMapping(value = "/Confirmation")
     public void confirm(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         forwardToView(request, response, "/WEB-INF/pages/Confirmation.jsp");
     }
