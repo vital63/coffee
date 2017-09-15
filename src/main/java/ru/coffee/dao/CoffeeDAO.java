@@ -12,31 +12,25 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-import org.springframework.stereotype.Repository;
 import ru.coffee.domain.CoffeeOrder;
 import ru.coffee.domain.CoffeeOrderItem;
 import ru.coffee.domain.CoffeeType;
 import ru.coffee.service.DBConnectionManager;
 
-@Repository
-public class CoffeeDAO {
+//@Repository
+public class CoffeeDAO implements CoffeeDAOInterface {
     
+    @Override
     public List<CoffeeType> listCoffeeType(Locale locale, boolean withDisabled) throws SQLException{
         List<CoffeeType> result = new ArrayList<>();
-        String sql = "SELECT * FROM coffeetype";
+        String sql =  CoffeeDAOInterface.getSqlQueryCoffeeType(locale, withDisabled);
         
-        if(locale != null && "ru".equalsIgnoreCase(locale.toLanguageTag())){
-            sql = "SELECT t.id, tr.type_name, t.price, t.disabled FROM coffee.coffeetype t "
-                + "LEFT JOIN coffeetypetranslate_ru tr on tr.id=t.id";
-        }        
         try(Connection connection = DBConnectionManager.getInstance().getConnection();
             Statement statement = connection.createStatement();
             ResultSet resultSet = statement.executeQuery(sql);)
         {
             while (resultSet.next()) {
                 boolean disabled = "Y".equals(resultSet.getString("disabled"));
-                if (!withDisabled && disabled)
-                    continue;
 
                 long id = resultSet.getInt("id");
                 String type = resultSet.getString("type_name");
@@ -50,6 +44,7 @@ public class CoffeeDAO {
         return result;
     }
     
+    @Override
     public CoffeeType getCoffeeTypeById(long id) throws SQLException {
         CoffeeType result = null;
         String sql = String.format("SELECT * FROM coffeetype WHERE id='%s'", id);
@@ -68,12 +63,6 @@ public class CoffeeDAO {
         return result;
     }
     
-//    public static void main(String[] args) {
-//        CoffeeDAO coffeeDAO = new CoffeeDAO();
-//        System.out.println("CoffeeTypeById=2:");
-//        System.out.println(coffeeDAO.getCoffeeTypeById(2));
-//    }
-
     private String getConfigValue(String parameter) throws SQLException {
         String result = null;
         String sql = String.format("SELECT value FROM configuration WHERE id='%s'", parameter);
@@ -88,51 +77,27 @@ public class CoffeeDAO {
         return result;
     }
     
-//    public static void main(String[] args){
-//        CoffeeDAO coffeeDAO = new CoffeeDAO();
-//        System.out.println("m: " + coffeeDAO.getConfigValue("m"));
-//        System.out.println("n: " + coffeeDAO.getConfigValue("n"));
-//        System.out.println("x: " + coffeeDAO.getConfigValue("x"));
-//    }
-
+    @Override
     public void calculateCost(CoffeeOrder order, List<CoffeeOrderItem> orderItems) throws SQLException {
-        final String sqlCreateTable = "CREATE TEMPORARY TABLE IF NOT EXISTS coffee_count "
-                + "(type_id INTEGER not NULL, count INTEGER, cost FLOAT, PRIMARY KEY ( type_id ));";
-        final String sqlClearTable = "TRUNCATE TABLE coffee_count;";
-        final String sqlInsertCount = "INSERT INTO coffee_count (type_id, count) VALUES (?, ?)";
-        final String sqlGetCostForType = "SELECT type_id, cost FROM coffee_count";
-        
         try (Connection connection = DBConnectionManager.getInstance().getConnection();
             Statement statement = connection.createStatement();
-            PreparedStatement insertCountStatement = connection.prepareStatement(sqlInsertCount);
             CallableStatement calculateCostStatement = connection.prepareCall("{call calculate_cost_order(?, ?)}")) 
         {
-            statement.executeUpdate(sqlCreateTable);
-            statement.executeUpdate(sqlClearTable);
+            CreateCoffeeCountTable(connection, orderItems);
             
-            for (CoffeeOrderItem item : orderItems) { //fill temporary table
-                insertCountStatement.setLong(1, item.getCoffeeType().getId());
-                insertCountStatement.setInt(2, item.getQuantity());
-                insertCountStatement.executeUpdate();
-            }
-            
+            //call special stored procedure that fill cost in temp table
             calculateCostStatement.registerOutParameter("coffee", java.sql.Types.FLOAT);
             calculateCostStatement.registerOutParameter("delivery", java.sql.Types.FLOAT);
             calculateCostStatement.executeQuery();
             
             //retriew cost for each type from temporary table
+            final String sqlGetCostForType = "SELECT type_id, cost FROM coffee_count";
             ResultSet resultSet = statement.executeQuery(sqlGetCostForType);
             while (resultSet.next()) {
                 int typeId = resultSet.getInt("type_id");
                 float cost = resultSet.getFloat("cost");
-                
-                for (CoffeeOrderItem item : orderItems) {
-                    if(item.getCoffeeType().getId() == typeId)
-                    {
-                        item.setCost(cost);
-                        break;
-                    }
-                }
+                orderItems.stream().filter(item -> item.getCoffeeType().getId() == typeId)
+                    .findFirst().ifPresent(item -> item .setCost(cost));
             }
             
             float coffeeCost = calculateCostStatement.getFloat("coffee");
@@ -145,17 +110,30 @@ public class CoffeeDAO {
         }
     }
     
-//    public static void main(String[] args) {
-//        CoffeeDAO coffeeDAO = new CoffeeDAO();
-//        try {
-//            System.out.println("listCoffeeType:");
-//            coffeeDAO.listCoffeeType(false).stream().forEach(System.out::println);
-//        } catch (SQLException ex) {
-//            Logger.getLogger(CoffeeDAO.class.getName()).log(Level.SEVERE, null, ex);
-//        }
-//    }
+    private void CreateCoffeeCountTable(Connection connection, List<CoffeeOrderItem> orderItems) throws SQLException {
+        final String sqlCreateTable = "CREATE TEMPORARY TABLE IF NOT EXISTS coffee_count "
+                + "(type_id INTEGER not NULL, count INTEGER, cost FLOAT, PRIMARY KEY ( type_id ));";
+        
+        final String sqlClearTable = "TRUNCATE TABLE coffee_count;";
+
+        final String sqlInsertCount = "INSERT INTO coffee_count (type_id, count) VALUES (?, ?)";
+
+        try(Statement statement = connection.createStatement();)
+        {
+            statement.executeUpdate(sqlCreateTable);
+            statement.executeUpdate(sqlClearTable);
+
+            PreparedStatement insertCountStatement = connection.prepareStatement(sqlInsertCount);
+
+            for (CoffeeOrderItem item : orderItems) { //fill temporary table
+                insertCountStatement.setLong(1, item.getCoffeeType().getId());
+                insertCountStatement.setInt(2, item.getQuantity());
+                insertCountStatement.executeUpdate();
+            }
+        }
+    }
     
-    
+    @Override
     public long getNextID(String tableName) throws SQLException {
         try (Connection connection = DBConnectionManager.getInstance().getConnection();
              Statement statement = connection.createStatement();) 
@@ -173,12 +151,7 @@ public class CoffeeDAO {
         return -1;
     }
     
-//    public static void main(String[] args) {
-//        CoffeeDAO coffeeDAO = new CoffeeDAO();
-//        System.out.println("NextID:");
-//        System.out.println(coffeeDAO.getNextID("coffeetype"));
-//    }
-    
+    @Override
     public CoffeeOrder getOrder(long id, List<CoffeeOrderItem> orderItems) throws SQLException, ParseException{
         CoffeeOrder result = null;
         if(orderItems == null)
@@ -227,8 +200,9 @@ public class CoffeeDAO {
         }
     }
     
-    private SimpleDateFormat coffeeOrderDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
+    public static SimpleDateFormat coffeeOrderDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
 
+    @Override
     public void createOrder(CoffeeOrder order, List<CoffeeOrderItem> orderItems) throws SQLException {
         Connection connection = DBConnectionManager.getInstance().getConnection();
         try (Statement statement = connection.createStatement();) 
@@ -268,30 +242,4 @@ public class CoffeeDAO {
         statement.executeUpdate(sql);
         orderItem.setId(orderItemID);
     }
-    
-//    private static CoffeeOrderItem createCoffeeOrderItem(CoffeeDAO coffeeDAO, CoffeeOrder order, int coffeeType, int quantity){
-//        CoffeeOrderItem result = new CoffeeOrderItem();
-//        result.setId(coffeeDAO.getNextID("coffeeorderitem"));
-//        result.setCoffeeOrder(order);
-//        result.setCoffeeType(coffeeDAO.getCoffeeTypeById(coffeeType));
-//        result.setQuantity(quantity);
-//        return result;
-//    }
-//    
-//    public static void main(String[] args) {
-//        CoffeeDAO coffeeDAO = new CoffeeDAO();
-//        
-//        CoffeeOrder order = new CoffeeOrder();
-//        order.setId(coffeeDAO.getNextID("coffeeorder"));
-//        order.setOrderDate(new Date());
-//        order.setName("vital");
-//        order.setDeliveryAddress("Ratomka");
-//        order.setTotalCost(50f);
-//        
-//        List<CoffeeOrderItem> orderItems = new ArrayList<CoffeeOrderItem>();
-//        orderItems.add(createCoffeeOrderItem(coffeeDAO, order, 2, 1));
-//        orderItems.add(createCoffeeOrderItem(coffeeDAO, order, 3, 2));
-//        
-//        coffeeDAO.createOrder(order, orderItems);
-//    }
 }

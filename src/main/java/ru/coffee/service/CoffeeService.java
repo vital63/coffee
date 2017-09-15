@@ -1,6 +1,7 @@
 package ru.coffee.service;
 
 import java.sql.SQLException;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -11,7 +12,8 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import ru.coffee.dao.CoffeeDAO;
+import org.springframework.transaction.annotation.Transactional;
+import ru.coffee.dao.CoffeeDAOInterface;
 import ru.coffee.domain.CoffeeOrder;
 import ru.coffee.domain.CoffeeOrderItem;
 import ru.coffee.domain.CoffeeType;
@@ -20,11 +22,12 @@ import ru.coffee.domain.CoffeeType;
 public class CoffeeService {
     
     @Autowired
-    private CoffeeDAO coffeeDAO;
+    private CoffeeDAOInterface coffeeDAO;
 
     public CoffeeService() {
     }
     
+    @Transactional
     public void prepareOrder(HttpServletRequest request) throws ServletException {
         try {
             CoffeeOrder order = new CoffeeOrder();
@@ -53,6 +56,7 @@ public class CoffeeService {
         }
     }
 
+    @Transactional
     public void createOrder(HttpServletRequest request) throws ServletException {
         List<CoffeeOrderItem> orderItems = (List<CoffeeOrderItem>) request.getSession().getAttribute("orderItems");
         CoffeeOrder order = (CoffeeOrder) request.getSession().getAttribute("order");
@@ -67,6 +71,7 @@ public class CoffeeService {
         }
     }
     
+    @Transactional
     public void listCoffee(HttpServletRequest request) throws SQLException {
         ResourceBundle bundle = (ResourceBundle) request.getSession().getAttribute("bundle");
         Locale locale = bundle == null ? null : bundle.getLocale();
@@ -74,11 +79,21 @@ public class CoffeeService {
         request.setAttribute("coffeeList", coffeeList);
     }
 
-    public CoffeeDAO getCoffeeDAO() {
+    @Transactional
+    public long getNextID(String tableName) throws SQLException{
+        return coffeeDAO.getNextID(tableName);
+    }
+    
+    @Transactional
+    public CoffeeOrder getOrder(long id, List<CoffeeOrderItem> orderItems) throws SQLException, ParseException{
+        return coffeeDAO.getOrder(id, orderItems);
+    }
+    
+    public CoffeeDAOInterface getCoffeeDAO() {
         return coffeeDAO;
     }
 
-    public void setCoffeeDAO(CoffeeDAO coffeeDAO) {
+    public void setCoffeeDAO(CoffeeDAOInterface coffeeDAO) {
         this.coffeeDAO = coffeeDAO;
     }
     

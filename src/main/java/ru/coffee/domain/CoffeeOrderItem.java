@@ -1,12 +1,36 @@
 package ru.coffee.domain;
 
-import java.util.Objects;
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.Table;
+import javax.persistence.Transient;
 
+@Entity
+@Table(name = "coffeeorderitem", schema = "", catalog = "coffee")
 public class CoffeeOrderItem {
+    
+    @Id
+    @Column(name = "id")
     private Long id;
+    
+    @ManyToOne
+    @JoinColumn(name = "type_id")
     private CoffeeType coffeeType;
+    
+    @ManyToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "order_id")
     private CoffeeOrder coffeeOrder;
+    
+    @Column(name = "quantity")
     private Integer quantity;
+    
+    @Transient
     private float cost;
 
     public CoffeeOrderItem() {

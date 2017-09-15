@@ -1,14 +1,36 @@
 package ru.coffee.domain;
 
 import java.util.Date;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Table;
+import javax.persistence.Transient;
 
+@Entity
+@Table(name = "coffeeorder", schema = "", catalog = "coffee")
 public class CoffeeOrder {
+    
+    @Id
+    @Column(name = "id")
     private Long id;
+    
+    @Column(name="order_date")
     private Date orderDate;
+    
+    @Column(name="name")
     private String name;
+    
+    @Column(name="delivery_address")
     private String deliveryAddress;
+    
+    @Transient
     private float coffeeCost;
+    
+    @Transient
     private float deliveryCost;
+    
+    @Column(name="cost")
     private Float totalCost;
 
     public CoffeeOrder() {

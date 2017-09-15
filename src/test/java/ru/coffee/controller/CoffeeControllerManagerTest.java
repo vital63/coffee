@@ -20,10 +20,12 @@ import static org.junit.Assert.*;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import ru.coffee.dao.CoffeeDAO;
+import ru.coffee.dao.CoffeeDAOInterface;
 import ru.coffee.domain.CoffeeOrder;
 import ru.coffee.domain.CoffeeOrderItem;
 import ru.coffee.domain.CoffeeType;
 import ru.coffee.filter.ServiceFilter;
+import ru.coffee.service.CoffeeService;
 
 public class CoffeeControllerManagerTest {
     
@@ -115,13 +117,13 @@ public class CoffeeControllerManagerTest {
         
         testCreateOrderWithoutAddress(request, response);
         
-        CoffeeDAO coffeeDAO = new CoffeeDAO();
+        CoffeeService coffeeService = controllerManager.getCoffeeService();
         
-        long nextID = coffeeDAO.getNextID("coffeeorder");
+        long nextID = coffeeService.getNextID("coffeeorder");
         testCreateOrderWithAddress(request, response);
         
         List<CoffeeOrderItem> orderItems = new ArrayList<>();
-        CoffeeOrder coffeeOrder = coffeeDAO.getOrder(nextID, orderItems);
+        CoffeeOrder coffeeOrder = coffeeService.getOrder(nextID, orderItems);
         assertNotNull("coffeeOrder is null: ", coffeeOrder);
         
         CoffeeOrder expectedOrder = (CoffeeOrder) request.getSession().getAttribute("order");
@@ -141,7 +143,7 @@ public class CoffeeControllerManagerTest {
         assertEquals("Size of colections of orderItems not conside: ", expectedOrderItems.size(), orderItems.size());
         Collections.sort(expectedOrderItems, comparator);
 
-        for(int i = 0; i < orderItems.size(); i++){
+        for(int i = 0; i < expectedOrderItems.size(); i++){
             CoffeeOrderItem expItem = expectedOrderItems.get(i);
             CoffeeOrderItem item = orderItems.get(i);
             assertEquals("OrderItem ID check: ", expItem.getId(), item.getId());
