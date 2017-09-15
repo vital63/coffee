@@ -19,13 +19,13 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
-import ru.coffee.dao.CoffeeDAO;
-import ru.coffee.dao.CoffeeDAOInterface;
+import ru.coffee.dao.CoffeeDAOJDBC;
 import ru.coffee.domain.CoffeeOrder;
 import ru.coffee.domain.CoffeeOrderItem;
 import ru.coffee.domain.CoffeeType;
 import ru.coffee.filter.ServiceFilter;
 import ru.coffee.service.CoffeeService;
+import ru.coffee.dao.CoffeeDAO;
 
 public class CoffeeControllerManagerTest {
     

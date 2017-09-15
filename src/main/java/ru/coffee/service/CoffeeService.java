@@ -13,16 +13,16 @@ import javax.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.coffee.dao.CoffeeDAOInterface;
 import ru.coffee.domain.CoffeeOrder;
 import ru.coffee.domain.CoffeeOrderItem;
 import ru.coffee.domain.CoffeeType;
+import ru.coffee.dao.CoffeeDAO;
 
 @Service
 public class CoffeeService {
     
     @Autowired
-    private CoffeeDAOInterface coffeeDAO;
+    private CoffeeDAO coffeeDAO;
 
     public CoffeeService() {
     }
@@ -89,11 +89,11 @@ public class CoffeeService {
         return coffeeDAO.getOrder(id, orderItems);
     }
     
-    public CoffeeDAOInterface getCoffeeDAO() {
+    public CoffeeDAO getCoffeeDAO() {
         return coffeeDAO;
     }
 
-    public void setCoffeeDAO(CoffeeDAOInterface coffeeDAO) {
+    public void setCoffeeDAO(CoffeeDAO coffeeDAO) {
         this.coffeeDAO = coffeeDAO;
     }
     

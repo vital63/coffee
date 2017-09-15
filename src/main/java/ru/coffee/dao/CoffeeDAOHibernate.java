@@ -14,7 +14,7 @@ import org.hibernate.criterion.Restrictions;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public class CoffeeDAOHibernate implements CoffeeDAOInterface{
+public class CoffeeDAOHibernate implements CoffeeDAO{
 
     @Autowired
     private SessionFactory sessionFactory;
@@ -22,7 +22,7 @@ public class CoffeeDAOHibernate implements CoffeeDAOInterface{
     @Override
     public void calculateCost(CoffeeOrder order, List<CoffeeOrderItem> orderItems) throws SQLException {
         //this method use coffeeDao because there is not sense to use hibernate for it
-        CoffeeDAO coffeeDAO = new CoffeeDAO();
+        CoffeeDAOJDBC coffeeDAO = new CoffeeDAOJDBC();
         coffeeDAO.calculateCost(order, orderItems);
     }
 
@@ -65,7 +65,7 @@ public class CoffeeDAOHibernate implements CoffeeDAOInterface{
 
     @Override
     public List<CoffeeType> listCoffeeType(Locale locale, boolean withDisabled) throws SQLException {
-        String sql = CoffeeDAOInterface.getSqlQueryCoffeeType(locale, withDisabled);
+        String sql = CoffeeDAO.getSqlQueryCoffeeType(locale, withDisabled);
         return (List<CoffeeType>)sessionFactory.getCurrentSession().createSQLQuery(sql).
                 addEntity(CoffeeType.class).list();
     }
