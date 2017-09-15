@@ -21,9 +21,8 @@ public class CoffeeDAOHibernate implements CoffeeDAO{
             
     @Override
     public void calculateCost(CoffeeOrder order, List<CoffeeOrderItem> orderItems) throws SQLException {
-        //this method use coffeeDao because there is not sense to use hibernate for it
-        CoffeeDAOJDBC coffeeDAO = new CoffeeDAOJDBC();
-        coffeeDAO.calculateCost(order, orderItems);
+        //this method uses coffeeDao because there is not sense to use hibernate for it
+        CoffeeJDBCUtils.calculateCost(sessionFactory.getCurrentSession().connection(), order, orderItems);
     }
 
     @Override
@@ -65,7 +64,7 @@ public class CoffeeDAOHibernate implements CoffeeDAO{
 
     @Override
     public List<CoffeeType> listCoffeeType(Locale locale, boolean withDisabled) throws SQLException {
-        String sql = CoffeeDAO.getSqlQueryCoffeeType(locale, withDisabled);
+        String sql = CoffeeJDBCUtils.getSqlQueryCoffeeType(locale, withDisabled);
         return (List<CoffeeType>)sessionFactory.getCurrentSession().createSQLQuery(sql).
                 addEntity(CoffeeType.class).list();
     }
