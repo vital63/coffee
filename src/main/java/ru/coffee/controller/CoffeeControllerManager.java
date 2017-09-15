@@ -20,7 +20,7 @@ public class CoffeeControllerManager {
     public void listCoffee(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         try {
             coffeeService.listCoffee(request);
-            forwardToView(request, response, "/CoffeeList.jsp");
+            forwardToView(request, response, "/WEB-INF/pages/CoffeeList.jsp");
         } catch (SQLException ex) {
             throw new ServletException(ex);
         }
@@ -34,7 +34,7 @@ public class CoffeeControllerManager {
             }
             coffeeService.prepareOrder(request);
         }
-        forwardToView(request, response, "/Delivery.jsp");
+        forwardToView(request, response, "/WEB-INF/pages/Delivery.jsp");
     }
 
     public void createOrder(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -47,7 +47,7 @@ public class CoffeeControllerManager {
     }
 
     public void confirm(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        forwardToView(request, response, "/Confirmation.jsp");
+        forwardToView(request, response, "/WEB-INF/pages/Confirmation.jsp");
     }
 
     private static void forwardToView(HttpServletRequest request, HttpServletResponse response, String path) throws ServletException, IOException {
