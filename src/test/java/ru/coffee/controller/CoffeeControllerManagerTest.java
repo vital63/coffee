@@ -7,8 +7,8 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
-import java.util.ResourceBundle;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import org.junit.After;
@@ -18,18 +18,19 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.MessageSource;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import ru.coffee.domain.CoffeeOrder;
 import ru.coffee.domain.CoffeeOrderItem;
 import ru.coffee.domain.CoffeeType;
-import ru.coffee.filter.ServiceFilter;
 import ru.coffee.service.CoffeeService;
 
 public class CoffeeControllerManagerTest {
     
     public CoffeeControllerManagerTest() {
-        ApplicationContext context = new ClassPathXmlApplicationContext("SpringConfig.xml");
+        ApplicationContext context = new ClassPathXmlApplicationContext("TestSpringConfig.xml");
         controllerManager = (CoffeeControllerManager) context.getBean("coffeeControllerManager");
+        messageSource = (MessageSource)context.getBean("messageSource");
     }
     
     @BeforeClass
@@ -49,13 +50,13 @@ public class CoffeeControllerManagerTest {
     }
 
     private CoffeeControllerManager controllerManager;
+    private MessageSource messageSource;
     
     @Test
     public void testListCoffee() throws Exception {
         HttpServletRequest request = new FakeHttpServletRequest();
-        ServiceFilter.setMessageBundle(request);
         
-        controllerManager.listCoffee(request, null);
+        controllerManager.listCoffee(request, null, Locale.getDefault());
         List<CoffeeType> coffeeList =(List<CoffeeType>)request.getAttribute("coffeeList");
         
         assertNotNull("coffeeList is null", coffeeList);
@@ -159,23 +160,22 @@ public class CoffeeControllerManagerTest {
     
     private void testCreateOrderWithoutAddress(FakeHttpServletRequest request, FakeHttpServletResponse response) throws IOException, ServletException {
         request.setParameter("name", "Vital");
-        controllerManager.createOrder(request, response);
+        controllerManager.createOrder(request, response, Locale.getDefault());
         assertEquals("Redirect is wrong: ", "Referer", response.getRedirectLocation());
-        String expectedErrorMessage = getStringFromBundleByKey(request, "input_address");
+        String expectedErrorMessage = messageSource.getMessage("input_address", null, Locale.getDefault());
         assertEquals("Error message is wrong: ", expectedErrorMessage, request.getAttribute("error"));
     }
 
     private void testCreateOrderWithAddress(FakeHttpServletRequest request, FakeHttpServletResponse response) throws IOException, ServletException {
         request.setAttribute("error", null);
         request.setParameter("address", "Ratomka Station");
-        controllerManager.createOrder(request, response);
+        controllerManager.createOrder(request, response, Locale.getDefault());
         assertEquals("Redirect is wrong: ", "Confirmation", response.getRedirectLocation());
         assertNull("Error message must be null: ", request.getAttribute("error"));
     }
     
     private FakeHttpServletRequest getDeliveryRequest() throws ServletException, IOException {
         FakeHttpServletRequest request = new FakeHttpServletRequest();
-        ServiceFilter.setMessageBundle(request);
         request.setMethod("POST");
         return request;
     }
@@ -214,17 +214,13 @@ public class CoffeeControllerManagerTest {
     }
 
     private void doTestErrorDeliveryRequest(FakeHttpServletRequest request, String expectedRedirect,
-            String expectedErrorKey, Object... args) throws IOException, ServletException {
+            String expectedErrorKey, Object... args) throws IOException, ServletException 
+    {
         FakeHttpServletResponse response = new FakeHttpServletResponse();
         controllerManager.delivery(request, response);
         assertEquals("Redirect is wrong: ", expectedRedirect, response.getRedirectLocation());
 
-        String expectedErrorMessage = getStringFromBundleByKey(request, expectedErrorKey, args);
+        String expectedErrorMessage = messageSource.getMessage(expectedErrorKey, args, Locale.getDefault());
         assertEquals("Error message is wrong: ", expectedErrorMessage, request.getAttribute("error"));
-    }
-
-    private String getStringFromBundleByKey(HttpServletRequest request, String key, Object... args) {
-        ResourceBundle bundle = (ResourceBundle) request.getSession().getAttribute("bundle");
-        return String.format(bundle.getString(key), args);
     }
 }

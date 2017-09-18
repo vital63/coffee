@@ -1,10 +1,12 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib uri="http://www.springframework.org/tags" prefix="spring"%>
 <%@ page pageEncoding="UTF-8" %>
 
 <div>
-    <a href="?lang=ru" <c:if test="${bundle.getLocale().toLanguageTag()=='ru'}">style="font-weight: bold"</c:if>>ru</a>
-    <a href="?lang=en" <c:if test="${bundle.getLocale().toLanguageTag()=='en'}">style="font-weight: bold"</c:if>>en</a>
+    <spring:message code="lang_tag" var="l"/>
+    <a href="?lang=ru" <c:if test="${l=='ru'}">style="font-weight: bold"</c:if>>ru</a>
+    <a href="?lang=en" <c:if test="${l=='en'}">style="font-weight: bold"</c:if>>en</a>
 </div>
 <div>
-    <a href="/coffee">${bundle.getString("to_main_page")}</a>
+    <a href="/coffee"><spring:message code="to_main_page"/></a>
 </div>

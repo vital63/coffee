@@ -2,6 +2,7 @@ package ru.coffee.controller;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.Locale;
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -17,11 +18,14 @@ public class CoffeeControllerManager {
 
     @Autowired
     private CoffeeService coffeeService;
+    
+    @Autowired
+    private Validator validator;
 
     @RequestMapping(value = "/")
-    public void listCoffee(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    public void listCoffee(HttpServletRequest request, HttpServletResponse response, Locale locale) throws ServletException, IOException {
         try {
-            coffeeService.listCoffee(request);
+            coffeeService.listCoffee(request, locale);
             forwardToView(request, response, "/WEB-INF/pages/CoffeeList.jsp");
         } catch (SQLException ex) {
             throw new ServletException(ex);
@@ -31,7 +35,7 @@ public class CoffeeControllerManager {
     @RequestMapping(value = "/Delivery")
     public void delivery(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         if ("POST".equals(request.getMethod())) {
-            if (!Validator.validateListCoffee(request)) {
+            if (!validator.validateListCoffee(request, Locale.getDefault())) {
                 response.sendRedirect(request.getHeader("Referer"));
                 return;
             }
@@ -41,8 +45,8 @@ public class CoffeeControllerManager {
     }
 
     @RequestMapping(value = "/CreateOrder")
-    public void createOrder(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        if (!Validator.validateAddress(request)) {
+    public void createOrder(HttpServletRequest request, HttpServletResponse response, Locale locale) throws ServletException, IOException {
+        if (!validator.validateAddress(request, locale)) {
             response.sendRedirect(request.getHeader("Referer"));
             return;
         }

@@ -23,6 +23,10 @@
         <property name="sessionFactory" ref="sessionFactory" />
     </bean>
     
+    <bean id="messageSource" class="org.springframework.context.support.ResourceBundleMessageSource">
+        <property name="basename" value="locales/messages" />
+    </bean>
+    
     <!--ÐÐ°ÑÑÑÐ¾Ð¹ÐºÐ¸ Ð±Ð¸Ð½Ð° dataSource Ð±ÑÐ´ÐµÐ¼ ÑÑÐ°Ð½Ð¸ÑÑ Ð² Ð¾ÑÐ´ÐµÐ»ÑÐ½Ð¾Ð¼ ÑÐ°Ð¹Ð»Ðµ -->
     <bean id="propertyConfigurer"
           class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer"

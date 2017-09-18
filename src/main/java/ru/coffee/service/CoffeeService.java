@@ -7,7 +7,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.ResourceBundle;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +22,7 @@ public class CoffeeService {
     
     @Autowired
     private CoffeeDAO coffeeDAO;
-
+    
     public CoffeeService() {
     }
     
@@ -72,9 +71,7 @@ public class CoffeeService {
     }
     
     @Transactional
-    public void listCoffee(HttpServletRequest request) throws SQLException {
-        ResourceBundle bundle = (ResourceBundle) request.getSession().getAttribute("bundle");
-        Locale locale = bundle == null ? null : bundle.getLocale();
+    public void listCoffee(HttpServletRequest request, Locale locale) throws SQLException {
         List<CoffeeType> coffeeList = coffeeDAO.listCoffeeType(locale, false);
         request.setAttribute("coffeeList", coffeeList);
     }

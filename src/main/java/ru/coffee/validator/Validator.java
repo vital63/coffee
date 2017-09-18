@@ -1,24 +1,30 @@
 package ru.coffee.validator;
 
+import java.util.Locale;
 import java.util.Map;
-import java.util.ResourceBundle;
 import javax.servlet.http.HttpServletRequest;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.MessageSource;
+import org.springframework.stereotype.Component;
 
+@Component
 public class Validator {
 
-    public static boolean validateAddress(HttpServletRequest request) {
+    @Autowired
+    MessageSource messageSource;
+    
+    public boolean validateAddress(HttpServletRequest request, Locale locale) {
         String address = (String) request.getParameter("address");
         if (address == null || address.isEmpty()) {
-            request.setAttribute("error", "Input Address!");
+            request.setAttribute("error", messageSource.getMessage("input_address", null, locale));
             return false;
         } else {
             return true;
         }
     }
 
-    public static boolean validateListCoffee(HttpServletRequest request) {
+    public boolean validateListCoffee(HttpServletRequest request, Locale locale) {
         boolean hasPositive = false;
-        ResourceBundle bundle = (ResourceBundle) request.getSession().getAttribute("bundle");
         Map<String, String[]> parameters = request.getParameterMap();
         for (String key : parameters.keySet()) {
             String value = parameters.get(key)[0];
@@ -36,14 +42,14 @@ public class Validator {
                         hasPositive = true;
                     }
                 } catch (NumberFormatException e) {
-                    String error = String.format(bundle.getString("quantity_not_correct"), value, id);
+                    String error = messageSource.getMessage("quantity_not_correct", new Object[] {value, id}, locale);
                     request.setAttribute("error", error);
                     return false;
                 }
             }
         }
         if (!hasPositive) {
-            request.setAttribute("error", bundle.getString("enter_positive_value"));
+            request.setAttribute("error", messageSource.getMessage("enter_positive_value", null, locale));
         }
         return hasPositive;
     }

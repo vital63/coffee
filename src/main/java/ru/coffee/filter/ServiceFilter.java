@@ -10,9 +10,7 @@ import java.io.StringWriter;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Iterator;
-import java.util.Locale;
 import java.util.Map;
-import java.util.ResourceBundle;
 import java.util.Set;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -41,30 +39,12 @@ public class ServiceFilter implements Filter {
     public ServiceFilter() {
     }    
     
-    public static void setMessageBundle(HttpServletRequest request) throws ServletException, IOException {
-        Locale locale;
-        String lang = request.getParameter("lang");
-
-        if (lang != null && !lang.isEmpty()) {
-            locale = Locale.forLanguageTag(lang);
-        } else if (request.getSession().getAttribute("bundle") == null) {
-            locale = Locale.ENGLISH;
-        } else {
-            return;
-        }
-
-        ResourceBundle bundle = ResourceBundle.getBundle("locales.messages", locale);
-        request.getSession().setAttribute("bundle", bundle);
-    }
-    
     private void doBeforeProcessing(RequestWrapper request, ResponseWrapper response)
             throws IOException, ServletException {
         if (debug) {
-            log("ValidationFilter:DoBeforeProcessing");
+            log("ServiceFilter:DoBeforeProcessing");
         }
         request.setCharacterEncoding("UTF-8");
-
-        setMessageBundle(request);
         
         // Write code here to process the request and/or response before
         // the rest of the filter chain is invoked.
@@ -100,7 +80,7 @@ public class ServiceFilter implements Filter {
     private void doAfterProcessing(RequestWrapper request, ResponseWrapper response)
             throws IOException, ServletException {
         if (debug) {
-            log("ValidationFilter:DoAfterProcessing");
+            log("ServiceFilter:DoAfterProcessing");
         }
 
         String error = (String) request.getAttribute("error");
@@ -160,7 +140,7 @@ public class ServiceFilter implements Filter {
             throws IOException, ServletException {
         
         if (debug) {
-            log("ValidationFilter:doFilter()");
+            log("ServiceFilter:doFilter()");
         }
 
         // Create wrappers for the request and response objects.
@@ -232,7 +212,7 @@ public class ServiceFilter implements Filter {
         this.filterConfig = filterConfig;
         if (filterConfig != null) {
             if (debug) {                
-                log("ValidationFilter: Initializing filter");
+                log("ServiceFilter: Initializing filter");
             }
         }
     }
@@ -243,9 +223,9 @@ public class ServiceFilter implements Filter {
     @Override
     public String toString() {
         if (filterConfig == null) {
-            return ("ValidationFilter()");
+            return ("ServiceFilter()");
         }
-        StringBuffer sb = new StringBuffer("ValidationFilter(");
+        StringBuffer sb = new StringBuffer("ServiceFilter(");
         sb.append(filterConfig);
         sb.append(")");
         return (sb.toString());
@@ -319,7 +299,7 @@ public class ServiceFilter implements Filter {
         
         public void setParameter(String name, String[] values) {
             if (debug) {
-                System.out.println("ValidationFilter::setParameter(" + name + "=" + values + ")" + " localParams = " + localParams);
+                System.out.println("ServiceFilter::setParameter(" + name + "=" + values + ")" + " localParams = " + localParams);
             }
             
             if (localParams == null) {
@@ -339,7 +319,7 @@ public class ServiceFilter implements Filter {
         @Override
         public String getParameter(String name) {
             if (debug) {
-                System.out.println("ValidationFilter::getParameter(" + name + ") localParams = " + localParams);
+                System.out.println("ServiceFilter::getParameter(" + name + ") localParams = " + localParams);
             }
             if (localParams == null) {
                 return getRequest().getParameter(name);
@@ -358,7 +338,7 @@ public class ServiceFilter implements Filter {
         @Override
         public String[] getParameterValues(String name) {
             if (debug) {
-                System.out.println("ValidationFilter::getParameterValues(" + name + ") localParams = " + localParams);
+                System.out.println("ServiceFilter::getParameterValues(" + name + ") localParams = " + localParams);
             }
             if (localParams == null) {
                 return getRequest().getParameterValues(name);
@@ -369,7 +349,7 @@ public class ServiceFilter implements Filter {
         @Override
         public Enumeration getParameterNames() {
             if (debug) {
-                System.out.println("ValidationFilter::getParameterNames() localParams = " + localParams);
+                System.out.println("ServiceFilter::getParameterNames() localParams = " + localParams);
             }
             if (localParams == null) {
                 return getRequest().getParameterNames();
@@ -380,7 +360,7 @@ public class ServiceFilter implements Filter {
         @Override
         public Map getParameterMap() {
             if (debug) {
-                System.out.println("ValidationFilter::getParameterMap() localParams = " + localParams);
+                System.out.println("ServiceFilter::getParameterMap() localParams = " + localParams);
             }
             if (localParams == null) {
                 return getRequest().getParameterMap();
